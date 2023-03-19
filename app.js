@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const history = [];
 const { Configuration, OpenAIApi } = require("openai");
 const { Client, Events, GatewayIntentBits } = require("discord.js");
 const client = new Client({
@@ -55,10 +56,13 @@ async function askChatGPT(content) {
     role: "user",
     content: content,
   };
-
+  history.push(request);
+  if (history.length > 1000) {
+    history.shift();
+  }
   const response = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
-    messages: [request],
+    messages: history,
     temperature: 0.4,
     max_tokens: 1000,
   });
