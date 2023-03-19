@@ -1,41 +1,21 @@
-import "dotenv/config";
-import express from "express";
+require("dotenv").config();
 
-const nacl = require("tweetnacl");
+const { Client, Events, GatewayIntentBits } = require('discord.js');
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-import { VerifyDiscordRequest } from "./utils.js";
 
-const app = express();
-const PORT = process.env.PORT || 22222;
-app.use(express.json({ verify: VerifyDiscordRequest(process.env.PUBLIC_KEY) }));
-
-app.listen(PORT, () => {
-  console.log("Listening on port", PORT);
+client.on('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
 });
 
-app.post("/", function (req, res) {
-  const isVerified = verifyMessage(req);
-  if (!isVerified) {
-    res.status(401).send("Bad request signature");
-  }
-  const { type } = req.body;
-  if (type === 1) {
-    res.status(200).send({
-      type: 1,
-    });
-    console.log("Ping received");
-  } else {
-    console.info(req.body);
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isCommand()) return;
+
+  if (interaction.commandName === 'ping') {
+    await interaction.reply('Pong!');
   }
 });
 
-function verifyMessage(request) {
-  const signature = request.get("X-Signature-Ed25519");
-  const timestamp = request.get("X-Signature-Timestamp");
+client.login(process.env.DISCORD_TOKEN)
 
-  return nacl.sign.detached.verify(
-    Buffer.from(timestamp + body),
-    Buffer.from(signature, "hex"),
-    Buffer.from(PUBLIC_KEY, "hex")
-  );
-}
+
